@@ -46,7 +46,7 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: controlAreaButtons.top
+        anchors.bottom: parent.bottom
         property string currentVideoTitle
         property string currentVideoId
         property string currentVideoViewCount
@@ -71,56 +71,6 @@ Item {
             currentVideoViewCount = videoListView.currentItem.videoViews
             currentVideoUploadDate = videoListView.currentItem.videoUploadDate
             console.log(videoListView.currentItem.videoTitle)
-        }
-    }
-    
-    RowLayout {
-        id: controlAreaButtons
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: Kirigami.Units.gridUnit * 2.5
-        
-        Button {
-            id: previousButton
-            text: "Previous Page"
-            Layout.preferredWidth: nextButton.visible ? parent.width / 2 : parent.width
-            Layout.fillHeight: true
-            icon.name: "go-previous-symbolic"
-            enabled: sessionData.previousAvailable
-            visible: sessionData.previousAvailable
-            highlighted: focus ? 1 : 0
-            onClicked: {
-                triggerGuiEvent("YoutubeSkill.PreviousPage", {})
-            }
-            
-            Keys.onReturnPressed: {
-                triggerGuiEvent("YoutubeSkill.PreviousPage", {})
-            }
-            
-            KeyNavigation.right: nextButton
-            KeyNavigation.up: videoListView
-        }
-        
-        Button {
-            id: nextButton
-            text: "Next Page"
-            enabled: sessionData.nextAvailable
-            visible: sessionData.nextAvailable
-            Layout.preferredWidth: previousButton.visible ? parent.width / 2 : parent.width
-            Layout.fillHeight: true
-            highlighted: focus ? 1 : 0
-            icon.name: "go-next-symbolic"
-            onClicked: {
-                triggerGuiEvent("YoutubeSkill.NextPage", {})
-            }
-            
-            Keys.onReturnPressed: {
-                triggerGuiEvent("YoutubeSkill.NextPage", {})
-            }
-            
-            KeyNavigation.up: videoListView
-            KeyNavigation.left: previousButton
         }
     }
 }

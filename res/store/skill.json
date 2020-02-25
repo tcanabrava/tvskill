@@ -1,0 +1,16 @@
+{
+    "name": "BitChute Skill",
+    "skillname": "bitchute-skill",
+    "authorname": "aiix",
+    "foldername": "",
+    "url": "https://github.com/AIIX/bitchute-skill",
+    "branch": "master",
+    "desktopFile": true,
+    "warning": "",
+    "examples": [
+        "Bitchute Gorillaz",
+        "Bitchute Nightstep Music",
+        "Pause Bitchute"
+    ]
+}
+ 

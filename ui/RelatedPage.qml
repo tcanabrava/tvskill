@@ -27,23 +27,50 @@ import Mycroft 1.0 as Mycroft
 import "+mediacenter/views" as Views
 import "+mediacenter/delegates" as Delegates
 
-Item {
-    property alias model: videoListView.model
-    Layout.fillWidth: true
-    Layout.fillHeight: true
+Mycroft.Delegate {
+    id: root
+    property var videoListModel: sessionData.relatedVideoListBlob.videoList
+    skillBackgroundSource: "https://source.unsplash.com/weekly?music"
+    fillWidth: true
     
     onFocusChanged: {
         if(focus){
             console.log("here in focus")
-            videoListView.forceActiveFocus()
+            relatedVideoListView.forceActiveFocus()
         }
     }
     
+    Keys.onBackPressed: {
+        parent.parent.parent.currentIndex--
+        parent.parent.parent.currentItem.contentItem.forceActiveFocus()
+    }
+    
+    Kirigami.Heading {
+        id: rltdHeading
+        anchors.top: parent.top
+        anchors.topMargin: Kirigami.Units.smallSpacing
+        anchors.left: parent.left
+        anchors.leftMargin: Kirigami.Units.largeSpacing
+        text: "Related Videos"
+        level: 2
+    }
+    
+    Kirigami.Separator {
+        id: rltdSep
+        anchors.top: rltdHeading.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 1
+        anchors.topMargin: Kirigami.Units.smallSpacing
+    }
+    
     Views.TileView {
-        id: videoListView
+        id: relatedVideoListView
         focus: true
         clip: true
-        anchors.top: parent.top
+        model: videoListModel
+        anchors.top: rltdSep.bottom
+        anchors.topMargin: Kirigami.Units.smallSpacing
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -52,11 +79,8 @@ Item {
         property string currentVideoViewCount
         property string currentVideoAuthor
         property string currentVideoUploadDate
-        delegate: Delegates.VideoCard{}
+        delegate: Delegates.VideoCardRelated{}
         
-        KeyNavigation.up: videoQueryBox
-        KeyNavigation.down: controlBarItem
-                
         Keys.onReturnPressed: {
             busyIndicatorPop.open()
             if(focus){
@@ -65,12 +89,12 @@ Item {
         }
             
         onCurrentItemChanged: {
-            currentVideoId = videoListView.currentItem.videoID
-            currentVideoTitle = videoListView.currentItem.videoTitle
-            currentVideoAuthor = videoListView.currentItem.videoChannel
-            currentVideoViewCount = videoListView.currentItem.videoViews
-            currentVideoUploadDate = videoListView.currentItem.videoUploadDate
-            console.log(videoListView.currentItem.videoTitle)
+            currentVideoId = relatedVideoListView.currentItem.videoID
+            currentVideoTitle = relatedVideoListView.currentItem.videoTitle
+            currentVideoViewCount = relatedVideoListView.currentItem.videoViews
+            currentVideoUploadDate = relatedVideoListView.currentItem.videoUploadDate
+            console.log(relatedVideoListView.currentItem.videoTitle)
         }
     }
 }
+ 

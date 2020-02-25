@@ -20,9 +20,7 @@ Mycroft.Delegate {
     property var videoViewCount: sessionData.viewCount
     property var videoPublishDate: sessionData.publishedDate
     property var videoListModel: sessionData.videoListBlob.videoList
-    property var nextSongTitle: sessionData.nextSongTitle
-    property var nextSongImage: sessionData.nextSongImage
-    property var nextSongID: sessionData.nextSongID
+    property bool busyIndicate: false
     
     //The player is always fullscreen
     fillWidth: true
@@ -40,24 +38,26 @@ Mycroft.Delegate {
         syncStatusTimer.restart()
     }
     
+    function changePage(){
+        parent.parent.parent.currentIndex++
+        parent.parent.parent.currentItem.contentItem.forceActiveFocus()
+    }
+    
+    onVideoThumbChanged: {
+        if(videoThumb == ""){
+            busyIndicatorPop.open()
+        } else {
+            busyIndicatorPop.close()
+        }
+    }
+    
     Keys.onDownPressed: {
         controlBarItem.opened = true
         controlBarItem.forceActiveFocus()
     }
-        
-    onVideoTitleChanged: {
-        triggerGuiEvent("YoutubeSkill.RefreshWatchList", {"title": videoTitle})
-        if(videoTitle != ""){
-            infomationBar.visible = true
-        }
-    }
-    
+            
     onFocusChanged: {
-        console.log("here")
-        if(focus && suggestions.visible){
-            console.log("in suggestFocus 1")
-            suggestions.forceActiveFocus();
-        } else if(focus && !suggestions.visbile) {
+        if(focus){
             video.forceActiveFocus();
         }
     }
@@ -75,7 +75,7 @@ Mycroft.Delegate {
         return value.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
     }
     
-    function setPublishedDate(publishDate){
+    function setPublishedDate(publishDate) {
         var date1 = new Date(publishDate).getTime();
         var date2 = new Date().getTime();
         console.log(date1)
@@ -91,9 +91,10 @@ Mycroft.Delegate {
         days = days % 365;
         var result = "Published: " + days + " days, " + hrs + " hours, " + mins + " minutes ago"
         return result
+        //return publishDate
     }
 
-    function listProperty(item){
+    function listProperty(item) {
         for (var p in item)
         {
             if( typeof item[p] != "function" )
@@ -183,19 +184,36 @@ Mycroft.Delegate {
             visible: root.videoStatus == "stop" ? 1 : 0
         }
         
-        SuggestionArea {
-            id: suggestions
-            visible: false
-            videoSuggestionList: videoListModel
-            nxtSongTitle: nextSongTitle
-            nxtSongImage: nextSongImage
-            nxtSongID: nextSongID
-            onVisibleChanged: {
-                if(visible) {
-                    suggestionListFocus = true
-                } else {
-                    video.focus = true
+        Controls.Popup {
+            id: busyIndicatorPop
+            x: (parent.width - width) / 2
+            y: (parent.height - height) / 2
+            
+            background: Rectangle {
+                anchors.fill: parent
+                color: Qt.rgba(0, 0, 0, 0.5)
+            }
+            closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutsideParent
+            
+            RowLayout {
+                anchors.centerIn: parent
+
+                Controls.BusyIndicator {
+                    running: busyIndicate
                 }
+                
+                Kirigami.Heading {
+                    level: 2
+                    text: "Searching Video"
+                }
+            }
+            
+            onOpened: {
+                busyIndicate = true
+            }
+            
+            onClosed: {
+                busyIndicate = false
             }
         }
         
@@ -207,21 +225,9 @@ Mycroft.Delegate {
             autoPlay: false
             Keys.onSpacePressed: video.playbackState == MediaPlayer.PlayingState ? video.pause() : video.play()
             KeyNavigation.up: closeButton
-            //Keys.onLeftPressed: video.seek(video.position - 5000)
-            //Keys.onRightPressed: video.seek(video.position + 5000)
             source: videoSource
             readonly property string currentStatus: root.enabled ? root.videoStatus : "pause"
             
-            onFocusChanged: {
-                if(focus){
-                    console.log("focus in video")
-                    if(suggestions.visbile){
-                        console.log("in suggestFocus 2")
-                        suggestions.forceActiveFocus();
-                    }
-                }
-            }
-
             onCurrentStatusChanged: {print("OOO"+currentStatus)
                 switch(currentStatus){
                     case "stop":
@@ -232,6 +238,7 @@ Mycroft.Delegate {
                         break;
                     case "play":
                         video.play()
+                        busyIndicatorPop.close()
                         delay(6000, function() {
                             infomationBar.visible = false;
                         })
@@ -256,11 +263,9 @@ Mycroft.Delegate {
             }
             
             onStatusChanged: {
-                if(status == MediaPlayer.EndOfMedia) {
-                    triggerGuiEvent("YoutubeSkill.NextAutoPlaySong", {})
-                    suggestions.visible = true
-                } else {
-                    suggestions.visible = false
+                console.log(status)
+                if(status == 7) {
+                    changePage()
                 }
             }
         }

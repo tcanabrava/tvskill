@@ -26,8 +26,6 @@ __author__ = 'aix'
 class BitChuteSkill(MycroftSkill):
     def __init__(self):
         super(BitChuteSkill, self).__init__(name="BitChuteSkill")
-        self.nextpage_url = None
-        self.previouspage_url = None
         self.live_category = None
         self.recentList = deque()
         self.recentPageObject = {}
@@ -55,9 +53,9 @@ class BitChuteSkill(MycroftSkill):
             require("BitChuteResumeKeyword").build()
         self.register_intent(bitchuteresume, self.bitchuteresume)
 
-        bitchutesearchpage = IntentBuilder("BitChuteSearchPageKeyword"). \
-            require("BitChuteSearchPageKeyword").build()
-        self.register_intent(bitchutesearchpage, self.bitchutesearchpage)
+        #bitchutesearchpage = IntentBuilder("BitChuteSearchPageKeyword"). \
+            #require("BitChuteSearchPageKeyword").build()
+        #self.register_intent(bitchutesearchpage, self.bitchutesearchpage)
 
         bitchutelauncherId = IntentBuilder("BitChuteLauncherId"). \
             require("BitChuteLauncherIdKeyword").build()
@@ -69,6 +67,7 @@ class BitChuteSkill(MycroftSkill):
                                   self.searchLive)
         
         self.gui.register_handler('BitChuteSkill.RefreshWatchList', self.refreshWatchList)
+        self.gui.register_handler('BitChuteSkill.RelatedWatchList', self.bitchuterelatedpage)
         
     def launcherId(self, message):
         self.show_homepage({})
@@ -109,77 +108,44 @@ class BitChuteSkill(MycroftSkill):
         try:
             query = message.data["Query"]
             LOG.info("I am in search Live")
-            self.searchCategoryList["videoList"] = self.build_category_list(quote(query))
+            url = "https://search.bitchute.com/renderer?use=bitchute-json&name=Search&login=bcadmin&key=7ea2d72b62aa4f762cc5a348ef6642b8&query={0}".format(query)
+            response = requests.get(url)
+            html = response.text
+            self.searchCategoryList["videoList"] = self.process_soup_additional(html)
             self.gui["searchListBlob"] = self.searchCategoryList
-            self.gui["previousAvailable"] = False
-            self.gui["nextAvailable"] = True
             self.gui["bgImage"] = quote(query)
-            self.gui.show_page("BitchuteLiveSearch.qml", override_idle=True)
+            self.gui.show_page("HomePage.qml", override_idle=True)
         except:
             LOG.debug("error")
         
     @intent_file_handler('bitchute.intent')
-    def youtube(self, message):
+    def bitchute(self, message):
         self.stop()
         self.gui.clear()
         self.enclosure.display_manager.remove_active()
         utterance = message.data['videoname'].lower()
-        self.youtube_play_video(utterance)
+        self.get_play_video(utterance)
     
-    def youtube_play_video(self, utterance):
-        self.gui["setTitle"] = ""
-        self.gui["video"] = ""
-        self.gui["status"] = "stop"
-        self.gui["currenturl"] = ""
-        self.gui["videoListBlob"] = ""
-        self.gui["recentListBlob"] = ""
-        self.gui["videoThumb"] = ""
-        url = "https://www.youtube.com/results?search_query=" + quote(utterance)
-        response = urlopen(url)
-        html = response.read()
-        a_tag = SoupStrainer('a')
-        soup = BeautifulSoup(html, 'html.parser', parse_only=a_tag)
-        self.gui["video"] = ""
-        self.gui["status"] = "stop"
-        self.gui["currenturl"] = ""
-        self.gui["videoListBlob"] = ""
-        self.gui["recentListBlob"] = ""
-        self.gui["videoThumb"] = ""
-        self.gui.show_pages(["YoutubePlayer.qml", "YoutubeSearch.qml"], 0, override_idle=True)
-        rfind = soup.findAll(attrs={'class': 'yt-uix-tile-link'})
-        try:
-            vid = str(rfind[0].attrs['href'])
-            veid = "https://www.youtube.com{0}".format(vid)
-            LOG.info(veid)
-            getvid = vid.split("v=")[1].split("&")[0]
-        except:
-            vid = str(rfind[1].attrs['href'])
-            veid = "https://www.youtube.com{0}".format(vid)
-            LOG.info(veid)
-            getvid = vid.split("v=")[1].split("&")[0]
-        thumb = "https://img.youtube.com/vi/{0}/maxresdefault.jpg".format(getvid)
-        self.gui["videoThumb"] = thumb
-        self.lastSong = veid
-        video = pafy.new(veid)
-        playstream = video.streams[0]
-        playurl = playstream.url
+    def bitchute_play_video(self, PlayObject):
         self.gui["status"] = str("play")
-        self.gui["video"] = str(playurl)
-        self.gui["currenturl"] = str(vid)
-        self.gui["currenttitle"] = video.title
-        self.gui["setTitle"] = video.title
-        self.gui["viewCount"] = video.viewcount
-        self.gui["publishedDate"] = video.published
-        self.gui["videoAuthor"] = video.username
+        self.gui["video"] = PlayObject['playableUrl']
+        self.gui["currenturl"] = PlayObject['videoID']
+        self.gui["currenttitle"] = PlayObject['videoTitle']
+        self.gui["setTitle"] = PlayObject['videoTitle']
+        self.gui["viewCount"] = PlayObject['videoViews']
+        self.gui["publishedDate"] = PlayObject['videoUploadDate']
+        self.gui["videoAuthor"] = PlayObject['videoChannel']
         self.gui["videoListBlob"] = ""
         self.gui["recentListBlob"] = ""
+        self.gui["relatedVideoListBlob"] = ""
         self.gui["nextSongTitle"] = ""
         self.gui["nextSongImage"] = ""
         self.gui["nextSongID"] = ""
-        self.gui.show_pages(["YoutubePlayer.qml", "YoutubeSearch.qml"], 0, override_idle=True)
-        self.recentList.appendleft({"videoID": getvid, "videoTitle": video.title, "videoImage": video.thumb})
-        self.youtubesearchpagesimple(utterance)
-        self.isTitle = video.title
+        self.bitchuterelatedpage(PlayObject['videoID'])
+        self.gui.show_pages(["BitchutePlayer.qml", "RelatedPage.qml"], 0, override_idle=True)
+        #self.recentList.appendleft({"videoID": getvid, "videoTitle": video.title, "videoImage": video.thumb})
+        #self.youtubesearchpagesimple(utterance)
+        #self.isTitle = video.title
         
     def bitchutepause(self, message):
         self.gui["status"] = str("pause")
@@ -189,24 +155,14 @@ class BitChuteSkill(MycroftSkill):
         self.gui["status"] = str("play")
         self.gui.show_page("BitchutePlayer.qml")
         
-    def bitchutesearchpage(self, message):
-        self.stop()
+    def bitchuterelatedpage(self, vidId):
+        videoUrlId = vidId
         videoList = []
         videoList.clear()
         videoPageObject = {}
-        utterance = message.data.get('utterance').lower()
-        utterance = utterance.replace(
-            message.data.get('BitChuteSearchPageKeyword'), '')
-        vid = self.getListSearch(utterance)
-        url = "https://www.youtube.com/results?search_query=" + vid
-        response = urlopen(url)
-        html = response.read()
-        videoList = self.process_soup_additional(html)
+        videoList = self.process_related_videos(videoUrlId)
         videoPageObject['videoList'] = videoList
-        self.recentPageObject['recentList'] = list(self.recentList)
-        self.gui["videoListBlob"] = videoPageObject
-        self.gui["recentListBlob"] = self.recentPageObject
-        self.gui.show_page("BitchuteSearch.qml")
+        self.gui["relatedVideoListBlob"] = videoPageObject
         
     def bitchutesearchpagesimple(self, query):
         LOG.info(query)
@@ -258,12 +214,12 @@ class BitChuteSkill(MycroftSkill):
         self.gui["polListBlob"] = self.polCategoryList
         self.gui["gamingListBlob"] = self.gamingCategoryList
         self.gui["searchListBlob"] = ""
+        self.gui["relatedVideoListBlob"] = ""
         self.gui["previousAvailable"] = False
         self.gui["nextAvailable"] = True
         self.gui["bgImage"] = self.live_category
-        self.gui.show_page("BitchuteLiveSearch.qml", override_idle=True)
+        self.gui.show_page("HomePage.qml", override_idle=True)
         
-
     def play_event(self, message):
         urlvideo = "https://www.bitchute.com/video/{0}".format(message.data['vidID'])
         self.lastSong = message.data['vidID']
@@ -278,7 +234,9 @@ class BitChuteSkill(MycroftSkill):
         self.gui["viewCount"] = str(message.data['vidViewCount'])
         self.gui["publishedDate"] = str(message.data['vidUploadDate'])
         self.gui["videoAuthor"] = str(message.data['vidAuthor'])
-        self.gui.show_page("BitchutePlayer.qml", override_idle=True)
+        self.gui["relatedVideoListBlob"] = ""
+        self.gui.show_pages(["BitchutePlayer.qml", "RelatedPage.qml"], 0, override_idle=True)
+        self.bitchuterelatedpage(message.data['vidID'])
         self.isTitle = str(message.data['vidTitle'])
 
     def stop(self):
@@ -288,37 +246,39 @@ class BitChuteSkill(MycroftSkill):
     def process_soup_additional(self, htmltype):
         videoList = []
         videoList.clear()
-        a_tag = SoupStrainer('a')
-        soup = BeautifulSoup(htmltype, 'html.parser', parse_only=a_tag)
-        for vid in soup.findAll('a'):
-            if not vid.has_attr('class'):
-                if vid.has_attr('target'):
-                    if not vid.find('img'):
-                        videoID = vid['href'].split("/")[4]
-                        videoUrl = vid['href'] 
-                        videoTitle = vid.contents[0]
-                    if vid.find('img'):
-                        videoImage = vid.contents[1]['src']
-                        videoList.append({"videoID": videoID, "videoTitle": videoTitle, "videoImage": videoImage, "videoUrl": videoUrl})               
-                
+        soup = BeautifulSoup(htmltype)
+        getVideoDetails = zip(soup.findAll(attrs={'class': 'ossfieldrdr1'}), soup.findAll('img'), soup.findAll(attrs={'class': 'ossfieldrdr4'}), soup.findAll(attrs={'class': 'ossfieldrdr6'}))
+        for vid in getVideoDetails:
+            videoID = vid[0].contents[1]['href'].split("/")[4]
+            videoTitle = vid[0].contents[1].text
+            videoImage = vid[1]['src']
+            nonPUD1 = vid[2].text.strip()
+            nonPUD2 = nonPUD1.rstrip()
+            videoUploadDate = nonPUD2
+            videoViews = vid[3].text.replace(">", "").strip().rstrip()
+            videoChannel = self.getChannelName(videoID)
+            if videoChannel is not None:
+                videoList.append({"videoID": videoID, "videoTitle": videoTitle, "videoImage": videoImage, "videoChannel": videoChannel, "videoViews": videoViews, "videoUploadDate": videoUploadDate})
+
         return videoList
     
-    def process_voice_play(self, utterance):
-        url = "https://www.bitchute.com/category/{0}".format(category)
-        LOG.info(url)
+    def process_voice_play(self, query):
+        videoUrl = None
+        videoUrlList = []
+        videoUrlList.clear()
+        url = "https://search.bitchute.com/renderer?use=bitchute-json&name=Search&login=bcadmin&key=7ea2d72b62aa4f762cc5a348ef6642b8&query={0}".format(query)
         response = requests.get(url)
+        html = response.text
         a_tag = SoupStrainer('a')
-        soup = BeautifulSoup(htmltype, 'html.parser', parse_only=a_tag)
+        soup = BeautifulSoup(html, 'html.parser', parse_only=a_tag)
         for vid in soup.findAll('a'):
             if not vid.has_attr('class'):
                 if vid.has_attr('target'):
                     if not vid.find('img'):
-                        videoID = vid['href'].split("/")[4]
-                        videoUrl = vid['href'] 
-                        videoTitle = vid.contents[0]
-                    if vid.find('img'):
-                        videoImage = vid.contents[1]['src']
-                        #videoList.append({"videoID": videoID, "videoTitle": videoTitle, "videoImage": videoImage, "videoUrl": videoUrl})
+                        videoUrl = vid['href']
+                        videoUrlList.append(videoUrl)
+        
+        return videoUrlList
     
     def process_category_listing(self, htmltype):
         videoList = []
@@ -344,18 +304,25 @@ class BitChuteSkill(MycroftSkill):
     def process_bitchute_video_type(self, videolink):
         ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s%(ext)s'})
         
-        with ydl:
-            result = ydl.extract_info(
-                videolink,
-                download=False # We just want to extract the info
-            )
-            if 'entries' in result:
-                video = result['entries'][0]
-            else:
-                video = result
-            
-        video_url = video['url']
-        return video_url
+        try:
+            with ydl:
+                result = ydl.extract_info(
+                    videolink,
+                    download=False # We just want to extract the info
+                )
+                if 'entries' in result:
+                    video = result['entries'][0]
+                else:
+                    video = result
+        
+            video_url = video['url']
+            return video_url
+        
+        except:
+            self.gui.clear()
+            self.enclosure.display_manager.remove_active()
+            self.gui.show_page("BitchuteFailed.qml", override_idle=True)
+            return None
 
     def refreshWatchList(self, message):
         try:
@@ -393,6 +360,80 @@ class BitChuteSkill(MycroftSkill):
         html = response.text
         videoList = self.process_category_listing(html)
         return videoList
+    
+    def clear_previous_video(self):
+        self.gui["setTitle"] = ""
+        self.gui["video"] = ""
+        self.gui["status"] = "stop"
+        self.gui["currenturl"] = ""
+        self.gui["videoListBlob"] = ""
+        self.gui["recentListBlob"] = ""
+        self.gui["relatedVideoListBlob"] = ""
+        self.gui["videoThumb"] = ""
+        self.gui.show_pages(["BitchutePlayer.qml", "RelatedPage.qml"], 0, override_idle=True)
+    
+    def set_video_thumb(self, thumb_url):
+        self.gui["setTitle"] = ""
+        self.gui["video"] = ""
+        self.gui["status"] = "stop"
+        self.gui["currenturl"] = ""
+        self.gui["videoListBlob"] = ""
+        self.gui["recentListBlob"] = ""
+        self.gui["relatedVideoListBlob"] = ""
+        self.gui["videoThumb"] = thumb_url
+        self.gui.show_pages(["BitchutePlayer.qml", "RelatedPage.qml"], 0, override_idle=True)
         
+    def get_play_video(self, query):
+        self.clear_previous_video()
+        url = "https://search.bitchute.com/renderer?use=bitchute-json&name=Search&login=bcadmin&key=7ea2d72b62aa4f762cc5a348ef6642b8&query={0}".format(query)
+        response = requests.get(url)
+        html = response.text
+        processed_result = self.process_soup_additional(html)
+        try:
+            vid = processed_result[0]['videoID']
+            vid_thumb = processed_result[0]['videoImage']
+            self.set_video_thumb(vid_thumb)
+            video_url = "https://www.bitchute.com/video/{0}".format(vid)
+            playable_url = self.process_bitchute_video_type(video_url)
+            if playable_url is not None:
+                playableObj = {'videoID': processed_result[0]['videoID'], 'videoTitle': processed_result[0]['videoTitle'], 'videoImage': processed_result[0]['videoImage'], 'videoChannel': processed_result[0]['videoChannel'], 'videoViews': processed_result[0]['videoViews'], 'videoUploadDate': processed_result[0]['videoUploadDate'], 'playableUrl': playable_url}
+                self.bitchute_play_video(playableObj)
+            else:
+                self.gui.clear()
+                self.enclosure.display_manager.remove_active()
+                self.gui.show_page("BitchuteFailed.qml", override_idle=True)
+                
+        except:
+            self.gui.clear()
+            self.enclosure.display_manager.remove_active()
+            self.gui.show_page("BitchuteFailed.qml", override_idle=True)
+                    
+    def getChannelName(self, videoId):
+        url = "https://www.bitchute.com/video/{0}".format(videoId)
+        response = requests.get(url)
+        html = response.text
+        soup = BeautifulSoup(html)
+        getChannelName = soup.findAll(attrs={'class': 'video-card-channel'})
+        for vid in getChannelName:
+            return vid.contents[0].text
+        
+    def process_related_videos(self, videoUrl):
+        relatedVideoList = []
+        relatedVideoList.clear()
+        url = "https://www.bitchute.com/video/{0}".format(videoUrl)
+        response = requests.get(url)
+        html = response.text
+        soup = BeautifulSoup(html)
+        getRelatedVids = soup.findAll(attrs={'class': 'video-card'})
+        for vid in getRelatedVids:
+            videoID = vid.contents[1]['href'].split("/")[2]
+            videoImage = vid.contents[1].contents[1].contents[1]['data-src']
+            videoViews = vid.contents[1].contents[1].contents[5].contents[1]
+            videoTitle = vid.contents[3].contents[1].contents[0].contents[0]
+            videoUploadDate = vid.contents[3].contents[3].text
+            relatedVideoList.append({"videoID": videoID, "videoTitle": videoTitle, "videoImage": videoImage, "videoViews": videoViews, "videoUploadDate": videoUploadDate})
+
+        return relatedVideoList
+                
 def create_skill():
     return BitChuteSkill()

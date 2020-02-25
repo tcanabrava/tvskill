@@ -17,7 +17,6 @@ Item {
     implicitHeight: gridView.cellHeight
     property string videoTitle: modelData.videoTitle
     property string videoID: modelData.videoID
-    property string videoChannel: modelData.videoChannel
     property string videoViews: modelData.videoViews
     property string videoUploadDate: modelData.videoUploadDate
     z: gridView.currentIndex == index ? 2 : 0
@@ -109,23 +108,7 @@ Item {
                     Kirigami.Separator {
                         Layout.fillWidth: true
                     }
-                    
-                    PlasmaComponents.Label {
-                        id: videoChannelName
-                        Layout.fillWidth: true
-                        wrapMode: Text.WordWrap
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        maximumLineCount: 1
-                        elide: Text.ElideRight
-                        color: PlasmaCore.ColorScope.textColor
-                        text: modelData.videoChannel
-                    }
-                    
-                    Kirigami.Separator {
-                        Layout.fillWidth: true
-                    }
-                    
+                                        
                     RowLayout {
                         Layout.fillWidth: true
                         
