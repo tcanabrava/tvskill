@@ -39,6 +39,7 @@ class BitChuteSkill(MycroftSkill):
         self.polCategoryList = {}
         self.gamingCategoryList = {}
         self.searchCategoryList = {}
+        self.lastVideoDetails = {}
         
     def initialize(self):
         self.load_data_files(dirname(__file__))
@@ -332,8 +333,9 @@ class BitChuteSkill(MycroftSkill):
         
     @intent_file_handler('bitchute-repeat.intent')
     def bitchute_repeat_last(self):
-        LOG.info("repeat last todo")
-
+        lastVideo = self.lastVideoDetails
+        self.bitchute_play_video(lastVideo)
+        
     def build_category_list(self, category):
         url = "https://www.bitchute.com/category/{0}".format(category)
         LOG.info(url)
@@ -378,6 +380,7 @@ class BitChuteSkill(MycroftSkill):
             playable_url = self.process_bitchute_video_type(video_url)
             if playable_url is not None:
                 playableObj = {'videoID': processed_result[0]['videoID'], 'videoTitle': processed_result[0]['videoTitle'], 'videoImage': processed_result[0]['videoImage'], 'videoChannel': processed_result[0]['videoChannel'], 'videoViews': processed_result[0]['videoViews'], 'videoUploadDate': processed_result[0]['videoUploadDate'], 'playableUrl': playable_url}
+                self.lastVideoDetails = playableObj
                 self.bitchute_play_video(playableObj)
             else:
                 self.gui.clear()
