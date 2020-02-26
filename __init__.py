@@ -332,26 +332,7 @@ class BitChuteSkill(MycroftSkill):
         
     @intent_file_handler('bitchute-repeat.intent')
     def bitchute_repeat_last(self):
-        video = pafy.new(self.lastSong)
-        thumb = video.thumb
-        playstream = video.streams[0]
-        playurl = playstream.url
-        self.gui["status"] = str("play")
-        self.gui["video"] = str(playurl)
-        self.gui["currenturl"] = ""
-        self.gui["currenttitle"] = video.title
-        self.gui["setTitle"] = video.title
-        self.gui["viewCount"] = video.viewcount
-        self.gui["publishedDate"] = video.published
-        self.gui["videoAuthor"] = video.username
-        self.gui["videoListBlob"] = ""
-        self.gui["recentListBlob"] = ""
-        self.gui["nextSongTitle"] = ""
-        self.gui["nextSongImage"] = ""
-        self.gui["nextSongID"] = ""
-        self.gui.show_pages(["YoutubePlayer.qml", "YoutubeSearch.qml"], 0, override_idle=True)
-        self.youtubesearchpagesimple(video.title)
-        self.isTitle = video.title
+        LOG.info("repeat last todo")
 
     def build_category_list(self, category):
         url = "https://www.bitchute.com/category/{0}".format(category)
