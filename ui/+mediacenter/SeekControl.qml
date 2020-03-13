@@ -126,7 +126,7 @@ Item {
                         height: Kirigami.Units.gridUnit * 2
                         visible: true
                         Layout.alignment: Qt.AlignRight
-                        text: setPublishedDate(videoPublishDate)
+                        text: " "
                         z: 100
                     }
                 }
@@ -148,6 +148,15 @@ Item {
                     highlighted: focus ? 1 : 0
                     icon.name: "go-previous-symbolic"
                     z: 1000
+                    
+                    background: Rectangle {
+                        Kirigami.Theme.colorSet: Kirigami.Theme.Button
+                        color: backButton.activeFocus ? Kirigami.Theme.highlightColor : Kirigami.Theme.backgroundColor
+                        radius: width / 2
+                        border.color: Kirigami.Theme.textColor
+                        border.width: 1
+                    }
+                    
                     onClicked: {
                         Mycroft.MycroftController.sendRequest("mycroft.gui.screen.close", {});
                         video.stop();
@@ -170,6 +179,15 @@ Item {
                     highlighted: focus ? 1 : 0
                     icon.name: videoControl.playbackState === MediaPlayer.PlayingState ? "media-playback-pause" : "media-playback-start"
                     z: 1000
+                    
+                    background: Rectangle {
+                        Kirigami.Theme.colorSet: Kirigami.Theme.Button
+                        color: button.activeFocus ? Kirigami.Theme.highlightColor : Kirigami.Theme.backgroundColor
+                        radius: width / 2
+                        border.color: Kirigami.Theme.textColor
+                        border.width: 1
+                    }
+                    
                     onClicked: {
                         video.playbackState === MediaPlayer.PlayingState ? video.pause() : video.play();
                         hideTimer.restart();

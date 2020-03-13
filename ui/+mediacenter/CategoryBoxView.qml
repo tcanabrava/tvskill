@@ -34,7 +34,6 @@ Item {
     
     onFocusChanged: {
         if(focus){
-            console.log("here in focus")
             videoListView.forceActiveFocus()
         }
     }
@@ -42,35 +41,19 @@ Item {
     Views.TileView {
         id: videoListView
         focus: true
-        clip: true
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        property string currentVideoTitle
-        property string currentVideoId
-        property string currentVideoViewCount
-        property string currentVideoAuthor
-        property string currentVideoUploadDate
-        delegate: Delegates.VideoCard{}
-        
-        KeyNavigation.up: videoQueryBox
-        KeyNavigation.down: controlBarItem
-                
-        Keys.onReturnPressed: {
-            busyIndicatorPop.open()
-            if(focus){
-                Mycroft.MycroftController.sendRequest("aiix.bitchute-skill.playvideo_id", {vidID: currentVideoId, vidTitle: currentVideoTitle, vidViewCount: currentVideoViewCount, vidUploadDate: currentVideoUploadDate, vidAuthor: currentVideoAuthor})
-            }
+        title: " "
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
         }
-            
-        onCurrentItemChanged: {
-            currentVideoId = videoListView.currentItem.videoID
-            currentVideoTitle = videoListView.currentItem.videoTitle
-            currentVideoAuthor = videoListView.currentItem.videoChannel
-            currentVideoViewCount = videoListView.currentItem.videoViews
-            currentVideoUploadDate = videoListView.currentItem.videoUploadDate
-            console.log(videoListView.currentItem.videoTitle)
+        delegate: Delegates.VideoCard {
+            width: videoListView.cellWidth
+            height: videoListView.cellHeight
         }
+        cellWidth: view.width / 4
+        cellHeight: cellWidth / 1.8 + Kirigami.Units.gridUnit * 5
+        KeyNavigation.up: searchBarArea
     }
 }

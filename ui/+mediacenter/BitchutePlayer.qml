@@ -39,8 +39,10 @@ Mycroft.Delegate {
     }
     
     function changePage(){
-        parent.parent.parent.currentIndex++
-        parent.parent.parent.currentItem.contentItem.forceActiveFocus()
+        delay(3500, function() {
+            parent.parent.parent.currentIndex++
+            parent.parent.parent.currentItem.contentItem.forceActiveFocus()
+        })
     }
     
     onVideoThumbChanged: {

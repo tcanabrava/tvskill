@@ -24,50 +24,71 @@ import org.kde.plasma.components 3.0 as PlasmaComponents
 import org.kde.kirigami 2.5 as Kirigami
 
 
-GridView {
-    id: view
-    cellWidth: parent.width >= 1500 ? parent.width / 4 : parent.width / 3
-    cellHeight: parent.width >= 1500 ? parent.height / 2 : parent.height / 3
-    
+FocusScope {
+    id: root
+    signal activated
+    property string title
+    property alias view: view
+    property alias delegate: view.delegate
+    property alias model: view.model
+    property alias count: view.count
+    property alias currentIndex: view.currentIndex
+    property alias currentItem: view.currentItem
     Layout.fillWidth: true
-    Layout.fillHeight: true
+    implicitHeight: view.implicitHeight + header.implicitHeight
+    property alias cellWidth: view.cellWidth
+    property alias cellHeight: view.cellHeight
     
-    //z: activeFocus ? 10: 1
-    keyNavigationEnabled: true
-    highlightFollowsCurrentItem: true
-    snapMode: ListView.SnapToItem
-    cacheBuffer: width
-    highlightMoveDuration: Kirigami.Units.longDuration
-    
-    PlasmaComponents.ScrollBar.vertical: PlasmaComponents.ScrollBar {
-        id: scrollBar
-        opacity: 0
-        interactive: false
-        onOpacityChanged: disappearTimer.restart()
-        Timer {
-            id: disappearTimer
-            interval: 1000
-            onTriggered: scrollBar.opacity = 0;
+    property Item navigationUp
+    property Item navigationDown
+
+    Kirigami.Heading {
+        id: header
+        anchors {
+            left: parent.left
+            right: parent.right
+            top: parent.top
+            leftMargin: Kirigami.Units.largeSpacing * 3
         }
-        Behavior on opacity {
-            OpacityAnimator {
-                duration: Kirigami.Units.longDuration
-                easing.type: Easing.InOutQuad
-            }
-        }
-    }
-    
-    Behavior on y {
-            NumberAnimation {
-                duration: Kirigami.Units.longDuration * 2
-                easing.type: Easing.InOutQuad
-            }
+        text: title
+        color: "white"
     }
 
-    move: Transition {
-        SmoothedAnimation {
-            property: "x"
-            duration: Kirigami.Units.longDuration
+    GridView {
+        id: view
+        anchors {
+                left: parent.left
+                right: parent.right
+                top: header.bottom
+                bottom: parent.bottom
+                topMargin: Kirigami.Units.largeSpacing * 2
+                leftMargin: Kirigami.Units.largeSpacing * 2
+                rightMargin: Kirigami.Units.largeSpacing * 2
         }
+        focus: true
+        z: activeFocus ? 10: 1 
+        cellWidth: parent.width / 4
+        cellHeight: parent.height / 1.5
+        keyNavigationEnabled: true
+        highlightFollowsCurrentItem: true
+        snapMode: ListView.SnapToItem
+        cacheBuffer: width
+        highlightMoveDuration: Kirigami.Units.longDuration
+        clip: true
+        
+        onCurrentItemChanged: {
+            positionViewAtIndex(currentIndex, GridView.Center)
+        }
+        
+        move: Transition {
+            SmoothedAnimation {
+                property: "x"
+                duration: Kirigami.Units.longDuration
+            }
+        }
+
+        KeyNavigation.left: root
+        KeyNavigation.right: root
     }
 }
+

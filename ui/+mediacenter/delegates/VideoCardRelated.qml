@@ -7,143 +7,157 @@ import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.components 3.0 as PlasmaComponents3
 import org.kde.plasma.components 2.0 as PlasmaComponents
 import Mycroft 1.0 as Mycroft
+import org.kde.mycroft.bigscreen 1.0 as BigScreen
 
-
-Item {
+BigScreen.AbstractDelegate {
     id: delegate
-    readonly property GridView gridView: GridView.view
     
-    implicitWidth: gridView.cellWidth
-    implicitHeight: gridView.cellHeight
-    property string videoTitle: modelData.videoTitle
-    property string videoID: modelData.videoID
-    property string videoViews: modelData.videoViews
-    property string videoUploadDate: modelData.videoUploadDate
-    z: gridView.currentIndex == index ? 2 : 0
-    property bool checked: gridView.currentIndex == index
-    
-    PlasmaComponents3.ItemDelegate {
-        anchors.centerIn: parent
-        implicitWidth: gridView.cellWidth - Kirigami.Units.largeSpacing * 2.5
-        implicitHeight: gridView.cellHeight - Kirigami.Units.largeSpacing * 2.5
-        
-        leftPadding: frame.margins.left + background.extraMargin
-        topPadding: frame.margins.top + background.extraMargin
-        rightPadding: frame.margins.right + background.extraMargin
-        bottomPadding: frame.margins.bottom + background.extraMargin
-         
-        background: Item {
-        id: background
-        property real extraMargin:  Math.round(gridView.currentIndex == index && delegate.activeFocus ? -Kirigami.Units.gridUnit/2 : Kirigami.Units.gridUnit/2)
-        Behavior on extraMargin {
-            NumberAnimation {
-                duration: Kirigami.Units.longDuration
-                easing.type: Easing.InOutQuad
-            }
-        }
+    implicitWidth: listView.cellWidth
+    height: parent.height
+    property bool busyIndicate: false
 
-        PlasmaCore.FrameSvgItem {
-            anchors {
-                fill: frame
-                leftMargin: -margins.left
-                topMargin: -margins.top
-                rightMargin: -margins.right
-                bottomMargin: -margins.bottom
+
+    contentItem: ColumnLayout {
+        spacing: Kirigami.Units.smallSpacing
+
+        Item {
+            id: imgRoot
+            //clip: true
+            Layout.alignment: Qt.AlignTop
+            Layout.fillWidth: true
+            Layout.topMargin: -delegate.topPadding + delegate.topInset + extraBorder
+            Layout.leftMargin: -delegate.leftPadding + delegate.leftInset + extraBorder
+            Layout.rightMargin: -delegate.rightPadding + delegate.rightInset + extraBorder
+            // Any width times 0.5625 is a 16:9 ratio
+            // Adding baseRadius is needed to prevent the bottom from being rounded
+            Layout.preferredHeight: width * 0.5625 + delegate.baseRadius
+            // FIXME: another thing copied from AbstractDelegate
+            property real extraBorder: 0
+
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                cached: true
+                maskSource: Rectangle {
+                    x: imgRoot.x;
+                    y: imgRoot.y
+                    width: imgRoot.width
+                    height: imgRoot.height
+                    radius: delegate.baseRadius
+                }
             }
-            imagePath: Qt.resolvedUrl("./background.svg")
-            prefix: "shadow"
-        }
-        PlasmaCore.FrameSvgItem {
-            id: frame
-            anchors {
-                fill: parent
-                margins: background.extraMargin
-            }
-            imagePath: Qt.resolvedUrl("./background.svg")
-            
-            width: gridView.currentIndex == index && delegate.activeFocus ? delegate.width : parent.width
-            height: gridView.currentIndex == index && delegate.activeFocus ? delegate.height : parent.height
-            opacity: 0.8
-        }
-    }
-         
-        contentItem: ColumnLayout {
-            spacing: 0
+
             Image {
-                id: videoImage
-                Layout.alignment: Qt.AlignTop
+                id: img
                 source: modelData.videoImage
-                Layout.fillWidth: true
-                Layout.preferredHeight: parent.height - Kirigami.Units.gridUnit * 6
-                fillMode: Image.Stretch
-            }
+                anchors {
+                    fill: parent
+                    // To not round under
+                    bottomMargin: delegate.baseRadius
+                }
+                opacity: 1
+                fillMode: Image.PreserveAspectCrop
 
-            Kirigami.Separator {
-                Layout.fillWidth: true
-                Layout.topMargin: Kirigami.Units.smallSpacing
-                Layout.alignment: Qt.AlignTop
-            }
-            
-            Rectangle {
-                color: Kirigami.Theme.backgroundColor
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.alignment: Qt.AlignTop
-                
-                ColumnLayout {
-                    anchors.fill: parent
-                    
+                Rectangle {
+                    id: videoDurationTime
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: Kirigami.Units.largeSpacing
+                    anchors.right: parent.right
+                    anchors.rightMargin: Kirigami.Units.largeSpacing
+                    // FIXME: kind of hacky to get the padding around the text right
+                    width: durationText.width + Kirigami.Units.largeSpacing
+                    height: Kirigami.Units.gridUnit
+                    radius: delegate.baseRadius
+                    visible: modelData.videoDuration ? 1 : 0
+                    color: Qt.rgba(0, 0, 0, 0.8)
+
                     PlasmaComponents.Label {
-                        id: videoLabel
-                        Layout.fillWidth: true
-                        wrapMode: Text.WordWrap
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        maximumLineCount: 2
-                        elide: Text.ElideRight
-                        color: PlasmaCore.ColorScope.textColor
-                        text: modelData.videoTitle
-                    }
-                    
-                    Kirigami.Separator {
-                        Layout.fillWidth: true
-                    }
-                                        
-                    RowLayout {
-                        Layout.fillWidth: true
-                        
-                        PlasmaComponents.Label {
-                            id: videoUploadDate
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignLeft
-                            wrapMode: Text.WordWrap
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            maximumLineCount: 1
-                            elide: Text.ElideRight
-                            color: PlasmaCore.ColorScope.textColor
-                            text: modelData.videoUploadDate
-                        }
-                        
-                        PlasmaComponents.Label {
-                            id: videoViews
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignRight
-                            wrapMode: Text.WordWrap
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            maximumLineCount: 1
-                            elide: Text.ElideRight
-                            color: PlasmaCore.ColorScope.textColor
-                            text: modelData.videoViews
-                        }
+                        id: durationText
+                        anchors.centerIn: parent
+                        text: modelData.videoDuration
+                        color: Kirigami.Theme.textColor
                     }
                 }
             }
+            
+            states: [
+                State {
+                    when: delegate.isCurrent
+                    PropertyChanges {
+                        target: imgRoot
+                        extraBorder: delegate.borderSize
+                    }
+                },
+                State {
+                    when: !delegate.isCurrent
+                    PropertyChanges {
+                        target: imgRoot
+                        extraBorder: 0
+                    }
+                }
+            ]
+            transitions: Transition {
+                onRunningChanged: {
+                    // Optimize when animating the thumbnail
+                    img.smooth = !running
+                }
+                NumberAnimation {
+                    property: "extraBorder"
+                    duration: Kirigami.Units.longDuration
+                    easing.type: Easing.InOutQuad
+                }
+            }
         }
-        
-        onClicked: {
-            Mycroft.MycroftController.sendRequest("aiix.youtube-skill.playvideo_id", {vidID: modelData.videoID, vidTitle: modelData.videoTitle})
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            // Compensate for blank space created from not rounding thumbnail bottom corners
+            Layout.topMargin: -delegate.baseRadius
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            spacing: Kirigami.Units.smallSpacing
+
+            Kirigami.Heading {
+                id: videoLabel
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                wrapMode: Text.Wrap
+                level: 3
+                //verticalAlignment: Text.AlignVCenter
+                maximumLineCount: 1
+                elide: Text.ElideRight
+                color: PlasmaCore.ColorScope.textColor
+                Component.onCompleted: {
+                    text = modelData.videoTitle
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                PlasmaComponents.Label {
+                    id: videoViews
+                    Layout.alignment: Qt.AlignLeft
+                    Layout.rightMargin: Kirigami.Units.largeSpacing
+                    elide: Text.ElideRight
+                    color: PlasmaCore.ColorScope.textColor
+                    text: modelData.videoViews
+                }
+
+                PlasmaComponents.Label {
+                    id: videoUploadDate
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignRight | Qt.AlignTop
+                    horizontalAlignment: Text.AlignRight
+                    elide: Text.ElideRight
+                    color: PlasmaCore.ColorScope.textColor
+                    text: modelData.videoUploadDate
+                }
+            }
         }
+    }
+
+    onClicked: {
+        busyIndicatorPop.open()
+        Mycroft.MycroftController.sendRequest("aiix.bitchute-skill.playvideo_id", {vidID: modelData.videoID, vidTitle: modelData.videoTitle, vidImage: modelData.videoImage, vidChannel: "1n", vidViews: modelData.videoViews, vidUploadDate: modelData.videoUploadDate, vidDuration: modelData.videoDuration})
     }
 }

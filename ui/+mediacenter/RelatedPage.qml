@@ -34,9 +34,8 @@ Mycroft.Delegate {
     fillWidth: true
     
     onFocusChanged: {
-        if(focus){
-            console.log("here in focus")
-            relatedVideoListView.forceActiveFocus()
+        if(focus) {
+            relatedVideoListView.view.forceActiveFocus()
         }
     }
     
@@ -45,55 +44,56 @@ Mycroft.Delegate {
         parent.parent.parent.currentItem.contentItem.forceActiveFocus()
     }
     
-    Kirigami.Heading {
-        id: rltdHeading
-        anchors.top: parent.top
-        anchors.topMargin: Kirigami.Units.smallSpacing
-        anchors.left: parent.left
-        anchors.leftMargin: Kirigami.Units.largeSpacing
-        text: "Related Videos"
-        level: 2
+    Connections {
+        target: Mycroft.MycroftController
+        onIntentRecevied: {
+            if(type == "speak") {
+                busyIndicatorPop.close()
+                busyIndicate = false
+            }
+        }
     }
-    
-    Kirigami.Separator {
-        id: rltdSep
-        anchors.top: rltdHeading.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: 1
-        anchors.topMargin: Kirigami.Units.smallSpacing
-    }
-    
+        
     Views.TileView {
         id: relatedVideoListView
         focus: true
-        clip: true
+        title: "Related Videos"
         model: videoListModel
-        anchors.top: rltdSep.bottom
-        anchors.topMargin: Kirigami.Units.smallSpacing
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        property string currentVideoTitle
-        property string currentVideoId
-        property string currentVideoViewCount
-        property string currentVideoAuthor
-        property string currentVideoUploadDate
-        delegate: Delegates.VideoCardRelated{}
-        
-        Keys.onReturnPressed: {
-            busyIndicatorPop.open()
-            if(focus){
-                Mycroft.MycroftController.sendRequest("aiix.bitchute-skill.playvideo_id", {vidID: currentVideoId, vidTitle: currentVideoTitle, vidViewCount: currentVideoViewCount, vidUploadDate: currentVideoUploadDate, vidAuthor: currentVideoAuthor})
-            }
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
         }
-            
-        onCurrentItemChanged: {
-            currentVideoId = relatedVideoListView.currentItem.videoID
-            currentVideoTitle = relatedVideoListView.currentItem.videoTitle
-            currentVideoViewCount = relatedVideoListView.currentItem.videoViews
-            currentVideoUploadDate = relatedVideoListView.currentItem.videoUploadDate
-            console.log(relatedVideoListView.currentItem.videoTitle)
+        cellWidth: view.width / 4
+        cellHeight: cellWidth / 1.8 + Kirigami.Units.gridUnit * 5
+        delegate: Delegates.VideoCardRelated{
+            width: relatedVideoListView.cellWidth
+            height: relatedVideoListView.cellHeight
+        }
+    }
+    
+    Popup {
+        id: busyIndicatorPop
+        width: parent.width
+        height: parent.height
+        background: Rectangle {
+            anchors.fill: parent
+            color: Qt.rgba(0, 0, 0, 0.5)
+        }
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+        
+        BusyIndicator {
+            running: busyIndicate
+            anchors.centerIn: parent
+        }
+        
+        onOpened: {
+            busyIndicate = true
+        }
+        
+        onClosed: {
+            busyIndicate = false
         }
     }
 }

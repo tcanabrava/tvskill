@@ -7,6 +7,8 @@ import pafy
 import sys
 import json
 import requests
+import timeago, datetime
+import dateutil.parser
 import youtube_dl
 if sys.version_info[0] < 3:
     from urllib import quote
@@ -232,9 +234,11 @@ class BitChuteSkill(MycroftSkill):
         self.gui["currenturl"] = str(message.data['vidID'])
         self.gui["currenttitle"] = str(message.data['vidTitle'])
         self.gui["setTitle"] = str(message.data['vidTitle'])
-        self.gui["viewCount"] = str(message.data['vidViewCount'])
+        self.gui["viewCount"] = str(message.data['vidViews'])
         self.gui["publishedDate"] = str(message.data['vidUploadDate'])
-        self.gui["videoAuthor"] = str(message.data['vidAuthor'])
+        self.gui["videoAuthor"] = str(message.data['vidChannel'])
+        if "1n" in self.gui["videoAuthor"]:
+            self.gui["videoAuthor"] = self.extractVideoAuthor(message.data['vidID'])
         self.gui["relatedVideoListBlob"] = ""
         self.gui.show_pages(["BitchutePlayer.qml", "RelatedPage.qml"], 0, override_idle=True)
         self.bitchuterelatedpage(message.data['vidID'])
@@ -255,11 +259,13 @@ class BitChuteSkill(MycroftSkill):
             videoImage = vid[1]['src']
             nonPUD1 = vid[2].text.strip()
             nonPUD2 = nonPUD1.rstrip()
-            videoUploadDate = nonPUD2
-            videoViews = vid[3].text.replace(">", "").strip().rstrip()
+            videoUploadDate = self.build_upload_date(nonPUD2)
+            LOG.info(videoUploadDate)
+            tempVideoViews = vid[3].text.replace(">", "").strip().rstrip()
+            videoViews = str(tempVideoViews.lstrip('0') + " " + "views")
             videoChannel = self.getChannelName(videoID)
             if videoChannel is not None:
-                videoList.append({"videoID": videoID, "videoTitle": videoTitle, "videoImage": videoImage, "videoChannel": videoChannel, "videoViews": videoViews, "videoUploadDate": videoUploadDate})
+                videoList.append({"videoID": videoID, "videoTitle": videoTitle, "videoImage": videoImage, "videoChannel": videoChannel, "videoViews": videoViews, "videoUploadDate": videoUploadDate, "videoDuration": " "})
 
         return videoList
     
@@ -289,16 +295,18 @@ class BitChuteSkill(MycroftSkill):
         for vid in getVideoDetails:
             videoID = vid.contents[1]['href'].split("/")[2]
             videoImage = vid.contents[1].contents[1].contents[1]['data-src']
-            videoViews = vid.contents[1].contents[1].contents[5].contents[1]
+            tempVideoViews = vid.contents[1].contents[1].contents[5].contents[1]
+            videoViews = str(tempVideoViews + " " + "views")
             videoTitle = vid.contents[3].contents[1].contents[0].contents[0]
             videoUploadDate = vid.contents[3].contents[5].contents[0]
+            videoDuration = vid.contents[1].contents[1].contents[7].text
             tempVidChannel = vid.contents[3].contents[3].contents[0].contents[0]
             if not type(tempVidChannel) is Tag:
                 videoChannel = vid.contents[3].contents[3].contents[0].contents[0]
             else:
                 videoChannel = "Hidden"
             
-            videoList.append({"videoID": videoID, "videoTitle": videoTitle, "videoImage": videoImage, "videoChannel": videoChannel, "videoViews": videoViews, "videoUploadDate": videoUploadDate})
+            videoList.append({"videoID": videoID, "videoTitle": videoTitle, "videoImage": videoImage, "videoChannel": videoChannel, "videoViews": videoViews, "videoUploadDate": videoUploadDate, "videoDuration": videoDuration})
             
         return videoList
     
@@ -418,6 +426,25 @@ class BitChuteSkill(MycroftSkill):
             relatedVideoList.append({"videoID": videoID, "videoTitle": videoTitle, "videoImage": videoImage, "videoViews": videoViews, "videoUploadDate": videoUploadDate})
 
         return relatedVideoList
-                
+    
+    def build_upload_date(self, update):
+        yourdate = dateutil.parser.parse(update)
+        now = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds = 60 * 3.4)
+        date = yourdate
+        dtstring = timeago.format(date, now)
+        
+        return dtstring
+    
+    def extractVideoAuthor(self, vid):
+        url = "https://www.bitchute.com/video/{0}".format(vid)
+        response = requests.get(url)
+        html = response.text
+        soup = BeautifulSoup(html)
+        getVideoDetails = soup.find("div", {"class":"details"})
+        publisher = getVideoDetails.contents[1].text
+        LOG.info(publisher)
+        
+        return publisher
+        
 def create_skill():
     return BitChuteSkill()
