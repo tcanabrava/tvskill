@@ -38,6 +38,7 @@ Mycroft.Delegate {
     property var searchListModel: sessionData.searchListBlob.videoList
     property var historyListModel: sessionData.historyListBlob.videoList
     property bool busyIndicate: false
+    property string searchQuery
     
     fillWidth: true
     

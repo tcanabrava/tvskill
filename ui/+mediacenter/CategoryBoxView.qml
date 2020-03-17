@@ -41,6 +41,7 @@ Item {
     function searchBitChuteLiveResults(query){
         triggerGuiEvent("BitChuteSkill.SearchLive", {"Query": query})
         categoryLayout.currentIndex = 5
+        searchQuery = query
     }
     
     function returnCategory(){
@@ -91,11 +92,16 @@ Item {
                 Layout.fillWidth: true
                 placeholderText: "Search here..."
                 Layout.fillHeight: true
+                text: searchQuery.length > 0 ? searchQuery : ""
                 onAccepted: {
                     searchBitChuteLiveResults(videoQueryBox.text)
                 }
                 KeyNavigation.down: videoListView
                 KeyNavigation.right: searchVideoQuery
+                
+                onTextChanged: {
+                    searchQuery = videoQueryBox.text
+                }
             }
             
             Kirigami.Icon {
