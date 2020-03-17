@@ -37,6 +37,7 @@ Mycroft.Delegate {
     property var gamingListModel: sessionData.gamingListBlob.videoList
     property var searchListModel: sessionData.searchListBlob.videoList
     property var historyListModel: sessionData.historyListBlob.videoList
+    property bool searchComplete: sessionData.searchComplete
     property bool busyIndicate: false
     property string searchQuery
     
@@ -82,7 +83,11 @@ Mycroft.Delegate {
     onSearchListModelChanged: {
         searchCatView.model = searchListModel
         console.log("SearchListModelChanged")
-        console.log(JSON.stringify(searchListModel))
+        busyIndicatorPop.close()
+    }
+    
+    onSearchCompleteChanged: {
+        busyIndicatorPop.close()
     }
     
     onFocusChanged: {

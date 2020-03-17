@@ -117,6 +117,8 @@ class BitChuteSkill(MycroftSkill):
             self.searchCategoryList["videoList"] = self.process_soup_additional(html)
             self.gui["searchListBlob"] = self.searchCategoryList
             self.gui["bgImage"] = quote(query)
+            self.gui["searchComplete"] = True
+            self.gui["searchComplete"] = False
             self.gui.show_page("HomePage.qml", override_idle=True)
         except:
             LOG.debug("error")
@@ -205,7 +207,8 @@ class BitChuteSkill(MycroftSkill):
         self.polCategoryList['videoList'] = self.build_category_list("entertainment")
         self.gui["polListBlob"] = self.polCategoryList
         self.gamingCategoryList['videoList'] = self.build_category_list("gaming")
-        self.gui["gamingListBlob"] = self.gamingCategoryList     
+        self.gui["gamingListBlob"] = self.gamingCategoryList
+        self.gui["searchComplete"] = False
         LOG.info("I AM NOW IN REMOVE LOGO PAGE FUNCTION")
 
     def show_search_page(self):
@@ -221,6 +224,7 @@ class BitChuteSkill(MycroftSkill):
         self.gui["previousAvailable"] = False
         self.gui["nextAvailable"] = True
         self.gui["bgImage"] = self.live_category
+        self.gui["searchComplete"] = False
         self.gui.show_page("HomePage.qml", override_idle=True)
         
     def play_event(self, message):

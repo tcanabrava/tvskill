@@ -42,6 +42,7 @@ Item {
         triggerGuiEvent("BitChuteSkill.SearchLive", {"Query": query})
         categoryLayout.currentIndex = 5
         searchQuery = query
+        busyIndicatorPop.open()
     }
     
     function returnCategory(){
