@@ -35,9 +35,14 @@ GridView {
     //z: activeFocus ? 10: 1
     keyNavigationEnabled: true
     highlightFollowsCurrentItem: true
-    snapMode: ListView.SnapToItem
+    highlightRangeMode: GridView.ApplyRange
+    snapMode: GridView.SnapToRow
     cacheBuffer: widths
     highlightMoveDuration: Kirigami.Units.longDuration
+    
+    onCurrentItemChanged: {
+        positionViewAtIndex(view.currentIndex, GridView.SnapPosition)
+    }
     
     PlasmaComponents.ScrollBar.vertical: PlasmaComponents.ScrollBar {
         id: scrollBar

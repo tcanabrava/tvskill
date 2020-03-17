@@ -71,10 +71,15 @@ FocusScope {
         cellHeight: parent.height / 1.5
         keyNavigationEnabled: true
         highlightFollowsCurrentItem: true
-        snapMode: ListView.SnapToItem
+        highlightRangeMode: GridView.ApplyRange
+        snapMode: GridView.SnapToRow
         cacheBuffer: width
         highlightMoveDuration: Kirigami.Units.longDuration
         clip: true
+        
+        onCurrentItemChanged: {
+            positionViewAtIndex(view.currentIndex, GridView.SnapPosition)
+        }
         
         move: Transition {
             SmoothedAnimation {
