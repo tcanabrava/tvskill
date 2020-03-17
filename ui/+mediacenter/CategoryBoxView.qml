@@ -34,7 +34,96 @@ Item {
     
     onFocusChanged: {
         if(focus){
-            videoListView.forceActiveFocus()
+            searchBarArea.forceActiveFocus()
+        }
+    }
+    
+    function searchBitChuteLiveResults(query){
+        triggerGuiEvent("BitChuteSkill.SearchLive", {"Query": query})
+        categoryLayout.currentIndex = 5
+    }
+    
+    function returnCategory(){
+        switch(catName){
+            case "News":
+                return homeCatButton
+                break
+            case "Music":
+                return musicCatButton
+                break
+            case "Technology":
+                return techCatButton
+                break
+            case "Entertainment":
+                return entertainmentCatButton
+                break
+            case "Gaming": 
+                return gamingCatButton
+                break
+            case "Search Results":
+                return searchCatButton
+                break
+        }
+    }
+    
+    Rectangle {
+        id: searchBarArea
+        anchors.top: parent.top
+        anchors.topMargin: Kirigami.Units.largeSpacing
+        anchors.horizontalCenter: parent.horizontalCenter
+        height: Kirigami.Units.gridUnit * 3
+        width: parent.width / 3
+        radius: 12
+        color: searchBarArea.activeFocus ? Qt.rgba(Kirigami.Theme.highlightColor.r, Kirigami.Theme.highlightColor.g, Kirigami.Theme.highlightColor.b, 0.95) : Qt.rgba(Kirigami.Theme.backgroundColor.r, Kirigami.Theme.backgroundColor.g, Kirigami.Theme.backgroundColor.b, 0.95)
+                
+        Keys.onReturnPressed: {
+            videoQueryBox.forceActiveFocus()
+        }
+        
+        KeyNavigation.up: returnCategory()
+        KeyNavigation.down: videoListView
+        
+        RowLayout {
+            anchors.fill: parent
+            TextField {
+                id: videoQueryBox
+                Layout.leftMargin: Kirigami.Units.largeSpacing
+                Layout.fillWidth: true
+                placeholderText: "Search here..."
+                Layout.fillHeight: true
+                onAccepted: {
+                    searchBitChuteLiveResults(videoQueryBox.text)
+                }
+                KeyNavigation.down: videoListView
+                KeyNavigation.right: searchVideoQuery
+            }
+            
+            Kirigami.Icon {
+                id: searchVideoQuery
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 2
+                Layout.fillHeight: true
+                source: "search" 
+                KeyNavigation.left: videoQueryBox
+                KeyNavigation.down: videoListView
+                
+                Keys.onReturnPressed: {
+                    searchBitChuteLiveResults(videoQueryBox.text)
+                }
+                
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        searchBitChuteLiveResults(videoQueryBox.text)
+                    }
+                }
+                
+                ColorOverlay {
+                    anchors.fill: parent
+                    source: searchVideoQuery
+                    color: Kirigami.Theme.highlightColor
+                    visible: searchVideoQuery.activeFocus ? 1 : 0
+                }
+            }
         }
     }
     
@@ -43,7 +132,7 @@ Item {
         focus: true
         title: " "
         anchors {
-            top: parent.top
+            top: searchBarArea.bottom
             left: parent.left
             right: parent.right
             bottom: parent.bottom

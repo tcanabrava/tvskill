@@ -48,11 +48,6 @@ Mycroft.Delegate {
     
     skillBackgroundSource: sessionData.bgImage ? "https://source.unsplash.com/weekly?" + sessionData.bgImage : "https://source.unsplash.com/weekly?music"
 
-    function searchBitChuteLiveResults(query){
-        triggerGuiEvent("BitChuteSkill.SearchLive", {"Query": query})
-        categoryLayout.currentIndex = 5
-    }
-    
     Connections {
         target: Mycroft.MycroftController
         onIntentRecevied: {
@@ -127,7 +122,7 @@ Mycroft.Delegate {
                 TopBarTabButton {
                     id: homeCatButton
                     KeyNavigation.right: musicCatButton
-                    KeyNavigation.down: searchBarArea
+                    KeyNavigation.down: categoryLayout
                     checked: categoryLayout.currentIndex == 0
                     text: "News"
                     onClicked: {
@@ -139,7 +134,7 @@ Mycroft.Delegate {
                     id: musicCatButton
                     KeyNavigation.right: techCatButton
                     KeyNavigation.left: newsCatButton
-                    KeyNavigation.down: searchBarArea
+                    KeyNavigation.down: categoryLayout
                     checked: categoryLayout.currentIndex == 1
                     text: "Music"
                     onClicked: {
@@ -151,7 +146,7 @@ Mycroft.Delegate {
                     id: techCatButton
                     KeyNavigation.right: polCatButton
                     KeyNavigation.left: musicCatButton
-                    KeyNavigation.down: searchBarArea
+                    KeyNavigation.down: categoryLayout
                     checked: categoryLayout.currentIndex == 2
                     text: "Technology"
                     onClicked: {
@@ -163,7 +158,7 @@ Mycroft.Delegate {
                     id: entertainmentCatButton
                     KeyNavigation.right: gamingCatButton
                     KeyNavigation.left: techCatButton
-                    KeyNavigation.down: searchBarArea
+                    KeyNavigation.down: categoryLayout
                     checked: categoryLayout.currentIndex == 3
                     text: "Entertainment"
                     onClicked: {
@@ -175,7 +170,7 @@ Mycroft.Delegate {
                     id: gamingCatButton
                     KeyNavigation.left: polCatButton
                     KeyNavigation.right: searchCatButton
-                    KeyNavigation.down: searchBarArea
+                    KeyNavigation.down: categoryLayout
                     checked: categoryLayout.currentIndex == 4
                     text: "Gaming"
                     onClicked: {
@@ -186,7 +181,7 @@ Mycroft.Delegate {
                 TopBarTabButton {
                     id: searchCatButton
                     KeyNavigation.left: gamingCatButton
-                    KeyNavigation.down: searchBarArea
+                    KeyNavigation.down: categoryLayout
                     checked: categoryLayout.currentIndex == 5
                     text: "Search"
                     onClicked: {
@@ -195,76 +190,7 @@ Mycroft.Delegate {
                 }
             }
         }
-        
-        Item {
-            id: searchVideoInputBox
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
-            Layout.maximumHeight: Kirigami.Units.gridUnit * 3
-            z: 120
-
-            Rectangle {
-                id: searchBarArea
-                anchors.top: parent.top
-                anchors.topMargin: Kirigami.Units.largeSpacing
-                anchors.horizontalCenter: parent.horizontalCenter
-                height: Kirigami.Units.gridUnit * 3
-                width: parent.width / 3
-                radius: 12
-                color: searchBarArea.activeFocus ? Qt.rgba(Kirigami.Theme.highlightColor.r, Kirigami.Theme.highlightColor.g, Kirigami.Theme.highlightColor.b, 0.95) : Qt.rgba(Kirigami.Theme.backgroundColor.r, Kirigami.Theme.backgroundColor.g, Kirigami.Theme.backgroundColor.b, 0.95)
-                        
-                Keys.onReturnPressed: {
-                    videoQueryBox.forceActiveFocus()
-                }
                 
-                KeyNavigation.up: searchCatButton
-                KeyNavigation.down: searchGridView
-                
-                RowLayout {
-                    anchors.fill: parent
-                    TextField {
-                        id: videoQueryBox
-                        Layout.leftMargin: Kirigami.Units.largeSpacing
-                        Layout.fillWidth: true
-                        placeholderText: "Search here..."
-                        Layout.fillHeight: true
-                        onAccepted: {
-                            searchYoutubeLiveResults(videoQueryBox.text)
-                        }
-                        KeyNavigation.down: searchGridView
-                        KeyNavigation.right: searchVideoQuery
-                    }
-                    
-                    Kirigami.Icon {
-                        id: searchVideoQuery
-                        Layout.preferredWidth: Kirigami.Units.gridUnit * 2
-                        Layout.fillHeight: true
-                        source: "search" 
-                        KeyNavigation.left: videoQueryBox
-                        KeyNavigation.down: searchGridView
-                        
-                        Keys.onReturnPressed: {
-                            searchBitChuteLiveResults(videoQueryBox.text)
-                        }
-                        
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                searchBitChuteLiveResults(videoQueryBox.text)
-                            }
-                        }
-                        
-                        ColorOverlay {
-                            anchors.fill: parent
-                            source: searchVideoQuery
-                            color: Kirigami.Theme.highlightColor
-                            visible: searchVideoQuery.activeFocus ? 1 : 0
-                        }
-                    }
-                }
-            }
-        }
-        
         StackLayout {
             id: categoryLayout
             Layout.fillWidth: true
