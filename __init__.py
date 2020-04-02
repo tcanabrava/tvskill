@@ -11,12 +11,8 @@ import timeago, datetime
 import dateutil.parser
 import youtube_dl
 
-if sys.version_info[0] < 3:
-    from urllib import quote
-    from urllib2 import urlopen
-else:
-    from urllib.request import urlopen
-    from urllib.parse import quote, urlencode
+from urllib.request import urlopen
+from urllib.parse import quote, urlencode
 from adapt.intent import IntentBuilder
 from bs4 import BeautifulSoup, SoupStrainer, Tag
 from mycroft.skills.core import MycroftSkill, intent_handler, intent_file_handler
