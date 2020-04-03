@@ -367,10 +367,7 @@ class BitChuteSkill(MycroftSkill):
                 result = ydl.extract_info(
                     videolink, download=False  # We just want to extract the info
                 )
-                if "entries" in result:
-                    video = result["entries"][0]
-                else:
-                    video = result
+                video = result["entries"][0] if entries in result else result
 
             video_url = video["url"]
             return video_url
